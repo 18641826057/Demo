@@ -1,0 +1,252 @@
+一，先准备好数据库：（详看数据库方面的知识）
+二，在web项目中导入hibernate的核心包：
+	antlr-2.7.7.jar
+	byte-buddy-1.9.5.jar
+	classmate-1.3.4.jar
+	dom4j-2.1.1.jar
+	FastInfoset-1.2.15.jar
+	hibernate-commons-annotations-5.1.0.Final.jar
+	hibernate-core-5.4.1.Final.jar
+	istack-commons-runtime-3.0.7.jar
+	jandex-2.0.5.Final.jar
+	javassist-3.24.0-GA.jar
+	javax.activation-api-1.2.0.jar
+	javax.persistence-api-2.2.jar
+	jaxb-api-2.3.1.jar
+	jaxb-runtime-2.3.1.jar
+	jboss-logging-3.3.2.Final.jar
+	jboss-transaction-api_1.2_spec-1.1.1.Final.jar
+	stax-ex-1.8.jar
+	txw2-2.3.1.jar
+三，准备好MySQL数据库驱动包：
+	mysql-connector-java-5.0.8-bin.jar
+四，创建实体类：应该和表内容所对应
+package com.josh.entity;
+
+public class Student {
+	
+	private int id;
+	private String name;
+	private int age;
+	private String sex;
+	private String cid;
+	private String sid;
+	public int getId() {
+		return id;
+	}
+	public void setId(int id) {
+		this.id = id;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public int getAge() {
+		return age;
+	}
+	public void setAge(int age) {
+		this.age = age;
+	}
+	public String getSex() {
+		return sex;
+	}
+	public void setSex(String sex) {
+		this.sex = sex;
+	}
+	public String getCid() {
+		return cid;
+	}
+	public void setCid(String cid) {
+		this.cid = cid;
+	}
+	public String getSid() {
+		return sid;
+	}
+	public void setSid(String sid) {
+		this.sid = sid;
+	}
+	
+
+}
+
+
+五，配置Student.hbm.xml
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+ 
+<hibernate-mapping package="com.josh.entity">
+    <class name="Student" table="t_student">
+        <id name="id" column="id">
+            <generator class="native">
+            </generator>
+        </id>
+        <property name="name" />
+        <property name="age" />
+        <property name="sex" />
+        <property name="cid" />
+        <property name="sid" />
+    </class>
+     
+</hibernate-mapping>
+
+
+
+六，配置 hibernate.cfg.xml
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE hibernate-configuration PUBLIC
+       "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+ 
+<hibernate-configuration>
+ 
+    <session-factory>
+        <!-- Database connection settings -->
+        <property name="connection.driver_class">com.mysql.jdbc.Driver</property>
+        <property name="connection.url">jdbc:mysql://localhost:3306/josh?characterEncoding=UTF-8</property>
+        <property name="connection.username">root</property>
+        <property name="connection.password">admin</property>
+        
+        <!-- SQL dialect -->
+        <property name="dialect">org.hibernate.dialect.MySQLDialect</property>
+        <property name="current_session_context_class">thread</property>
+        <property name="show_sql">true</property>
+        <property name="hbm2ddl.auto">update</property>
+        <mapping resource="com/josh/entity/Student.hbm.xml" />
+    </session-factory>
+ 
+</hibernate-configuration>
+
+
+七，测试类：正常来说一个就够了，但我这是按照web项目的写法，用两个，一个是dao层，一个是action层，
+	用action去调用dao层，dao层负责获取数据，是干活的人，action是领导，让dao去拿东西，把活干出来，
+	然后action把东西交给jsp页面。
+
+1，dao层：
+package com.josh.dao;
+
+import java.util.List;
+
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
+
+import com.josh.entity.Student;
+
+public class StudentDao {
+	
+	public List<Student> getStudentList(){
+		List<Student> students = null;
+		
+		SessionFactory sessionStory = new Configuration().configure().buildSessionFactory();
+		//这里的session不是web中的session，
+		//web中的session代表的是客户端与web服务器之间的会话，这里的session指的是程序与数据库之间的会话。
+		//它是由hibernate管理的。
+		Session session = sessionStory.openSession();
+		session.beginTransaction();
+		
+		students = session.createQuery("from Student").getResultList();
+		
+		return students;
+	}
+
+}
+
+
+2，action层：
+package com.josh.action;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.josh.dao.StudentDao;
+import com.josh.entity.Student;
+
+public class HelloWorldAction {
+	
+	private String name;
+	private List<Student> students;
+	
+	public String execute() throws Exception{
+		
+		System.out.println("getName:"+getName());
+		
+		if(getName().equals("") || getName() == null) {
+			return "null";
+		}else if(getName().equals("伊文君")){
+			students = new ArrayList<Student>();
+			getStudentList();
+			for (Student student : students) {
+				System.out.println("编号："+student.getId()+"，姓名："+student.getName()+"，年龄："+student.getAge()+"，性别："+
+						student.getSex()+"，身份证号："+student.getCid()+"，学号："+student.getSid());
+			}
+			return "success";
+		}else {
+			return "error";
+		}
+		
+	}
+	
+	public void getStudentList(){
+		StudentDao studentDao = new StudentDao();
+		students = studentDao.getStudentList();
+	}
+
+	
+	//getter and setter
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public List<Student> getStudents() {
+		return students;
+	}
+	public void setStudents(List<Student> students) {
+		this.students = students;
+	}
+	
+}
+
+
+八，jsp页面显示数据：用struts2的s标签，很方便：需要加：<%@ taglib uri="/struts-tags" prefix="s"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+
+<%@ taglib uri="/struts-tags" prefix="s"%>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>HelloWorld</title>
+</head>
+<body>
+<h2>This is HelloWorld Page.</h2>
+Hello World, Welcome:<s:property value="name"/>访问我们的网站！<br>
+<table border="1" align="center">
+	<tr align="center">
+		<td width="50px">ID</td>
+		<td width="100px">学生姓名</td>
+		<td width="80px">年龄</td>
+		<td width="80px">性别</td>
+		<td width="200px">身份证号</td>
+		<td width="150px">学号</td>
+	</tr>
+	<s:iterator value="students">
+		<tr align="center">
+			<td><s:property value="id"/></td>
+			<td><s:property value="name"/></td>
+			<td><s:property value="age"/></td>
+			<td><s:property value="sex"/></td>
+			<td><s:property value="cid"/></td>
+			<td><s:property value="sid"/></td>
+		</tr>
+	</s:iterator>
+</table>
+</body>
+</html>
