@@ -1,0 +1,5 @@
+1，先把自己的提交Commot to wenjun
+2，自己分支没有改动了，就切换到主分支：master。
+3，然后点菜单栏的Branch，下的Merge into current branch...
+4，弹出来的弹窗中，选择自己的分支wenjun，然后点击下面的Merge master into master。
+5，然后按Ctrl+P，把变动推送到远端。
